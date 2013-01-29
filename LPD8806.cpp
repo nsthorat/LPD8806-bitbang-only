@@ -6,15 +6,6 @@
 
 /*****************************************************************************/
 
-/*
-// Constructor for use with hardware SPI (specific clock/data pins):
-LPD8806::LPD8806(uint16_t n) {
-  pixels = NULL;
-  begun  = false;
-  updateLength(n);
-  updatePins();
-}*/
-
 // Constructor for use with arbitrary clock/data pins:
 LPD8806::LPD8806(uint16_t n, uint8_t dpin, uint8_t cpin) {
   pixels = NULL;
@@ -23,45 +14,14 @@ LPD8806::LPD8806(uint16_t n, uint8_t dpin, uint8_t cpin) {
   updatePins(dpin, cpin);
 }
 
-/*
-// via Michael Vogt/neophob: empty constructor is used when strip length
-// isn't known at compile-time; situations where program config might be
-// read from internal flash memory or an SD card, or arrive via serial
-// command.  If using this constructor, MUST follow up with updateLength()
-// and updatePins() to establish the strip length and output pins!
-LPD8806::LPD8806(void) {
-  numLEDs = 0;
-  pixels  = NULL;
-  begun   = false;
-  updatePins(); // Must assume hardware SP	I until pins are set
-}*/
-
 // Activate hard/soft SPI as appropriate:
 void LPD8806::begin(void) {
-  //if(hardwareSPI == true) startSPI();
-  //else                    startBitbang();
-  // ->
-	startBitbang();
-  // <-
+  startBitbang();
   begun = true;
 }
 
-/*
-// Change pin assignments post-constructor, switching to hardware SPI:
-void LPD8806::updatePins(void) {
-  hardwareSPI = false;
-  datapin     = clkpin = 0;
-  // If begin() was previously invoked, init the SPI hardware now:
-  if(begun == true) startSPI();
-  // Otherwise, SPI is NOT initted until begin() is explicitly called.
-
-  // Note: any prior clock/data pin directions are left as-is and are
-  // NOT restored as inputs!
-}*/
-
 // Change pin assignments post-constructor, using arbitrary pins:
 void LPD8806::updatePins(uint8_t dpin, uint8_t cpin) {
-
   datapin     = dpin;
   clkpin      = cpin;
   clkport     = portOutputRegister(digitalPinToPort(cpin));
@@ -70,8 +30,6 @@ void LPD8806::updatePins(uint8_t dpin, uint8_t cpin) {
   datapinmask = digitalPinToBitMask(dpin);
 
   if(begun == true) { // If begin() was previously invoked...
-    // If previously using hardware SPI, turn that off:
-    //if(hardwareSPI == true) SPI.end();
     startBitbang(); // Regardless, now enable 'soft' SPI outputs
   } // Otherwise, pins are not set to outputs until begin() is called.
 
@@ -80,20 +38,6 @@ void LPD8806::updatePins(uint8_t dpin, uint8_t cpin) {
 
   hardwareSPI = false;
 }
-
-/*
-// Enable SPI hardware and set up protocol details:
-void LPD8806::startSPI(void) {
-  SPI.begin();
-  SPI.setBitOrder(MSBFIRST);
-  SPI.setDataMode(SPI_MODE0);
-  SPI.setClockDivider(SPI_CLOCK_DIV8);  // 2 MHz
-  // SPI bus is run at 2MHz.  Although the LPD8806 should, in theory,
-  // work up to 20MHz, the unshielded wiring from the Arduino is more
-  // susceptible to interference.  Experiment and see what you get.
-
-  SPDR = 0; // 'Prime' the SPI bus with initial latch (no wait)
-}*/
 
 // Enable software SPI pins and issue initial latch:
 void LPD8806::startBitbang() {
@@ -130,21 +74,16 @@ void LPD8806::show(void) {
   uint16_t i, n3 = numLEDs * 3 + 1; // 3 bytes per LED + 1 for latch
   
   // write 24 bits per pixel
-  if (hardwareSPI) {
-    for (i=0; i<n3; i++ ) {
-     // while(!(SPSR & (1<<SPIF))); // Wait for prior byte out
-     // SPDR = pixels[i];           // Issue new byte
-    }
-  } else {
-    for (i=0; i<n3; i++ ) {
-      for (uint8_t bit=0x80; bit; bit >>= 1) {
-        if(pixels[i] & bit) *dataport |=  datapinmask;
-        else                *dataport &= ~datapinmask;
-        *clkport |=  clkpinmask;
-        *clkport &= ~clkpinmask;
-      }
+
+  for (i=0; i<n3; i++ ) {
+    for (uint8_t bit=0x80; bit; bit >>= 1) {
+      if(pixels[i] & bit) *dataport |=  datapinmask;
+      else                *dataport &= ~datapinmask;
+      *clkport |=  clkpinmask;
+      *clkport &= ~clkpinmask;
     }
   }
+
 }
 
 // Convert separate R,G,B into combined 32-bit GRB color:
