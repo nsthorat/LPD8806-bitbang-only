@@ -1,5 +1,5 @@
 #include "LPD8806.h"
-#include "SPI.h"
+// eh might as well get rid of this!.. thanks for the code. #include "SPI.h"
 
 // Example to control LPD8806-based RGB LED Modules in a strip
 
