@@ -12,7 +12,6 @@
 // program also included with the LPD8806 library.
 
 #include <avr/pgmspace.h>
-#include "SPI.h"
 #include "LPD8806.h"
 #include "TimerOne.h"
 
