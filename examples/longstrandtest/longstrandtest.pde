@@ -1,5 +1,5 @@
 #include "LPD8806.h"
-#include "SPI.h"
+
 
 // Simple test for 160 (5 meters) of LPD8806-based RGB LED strip
 
